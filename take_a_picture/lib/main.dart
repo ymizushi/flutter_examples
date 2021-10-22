@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 
-void main() {
+List<CameraDescription>? cameras;
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
   runApp(const MyApp());
 }
 
@@ -49,6 +53,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  CameraController? controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = CameraController(cameras![0], ResolutionPreset.max);
+    controller?.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -63,6 +86,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!controller!.value.isInitialized) {
+      return Container();
+    }
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -95,9 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
+            CameraPreview(controller!),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
